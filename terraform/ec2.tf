@@ -1,20 +1,26 @@
-data "aws_ami" "amazon_linux" {
-  most_recent = true
-  owners      = ["amazon"]
+resource "tls_private_key" "ssh_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
 
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
-  }
+resource "aws_key_pair" "generated_key" {
+  key_name   = "my-generated-key"
+  public_key = tls_private_key.ssh_key.public_key_openssh
+}
+
+resource "local_file" "private_key_file" {
+  content         = tls_private_key.ssh_key.private_key_pem
+  filename        = "my-generated-key.pem"
+  file_permission = "0400"
 }
 
 resource "aws_instance" "web_server_1" {
-  ami                    = data.aws_ami.amazon_linux.id
+  ami                    = "ami-0360c520857e3138f"
   instance_type          = "t2.micro"
   subnet_id              = aws_subnet.public_a.id
   vpc_security_group_ids = [aws_security_group.webserver_sg.id]
-  key_name               = var.key_pair_name
-  user_data              = templatefile("user_data.sh", {
+  key_name               = aws_key_pair.generated_key.key_name
+  user_data = templatefile("user_data.sh", {
     rds_endpoint = aws_db_instance.rds.endpoint,
     db_username  = var.db_username,
     db_password  = var.db_password,
@@ -26,12 +32,12 @@ resource "aws_instance" "web_server_1" {
 }
 
 resource "aws_instance" "web_server_2" {
-  ami                    = data.aws_ami.amazon_linux.id
+  ami                    = "ami-0360c520857e3138f"
   instance_type          = "t2.micro"
   subnet_id              = aws_subnet.public_b.id
   vpc_security_group_ids = [aws_security_group.webserver_sg.id]
-  key_name               = var.key_pair_name
-  user_data              = templatefile("user_data.sh", {
+  key_name               = aws_key_pair.generated_key.key_name
+  user_data = templatefile("user_data.sh", {
     rds_endpoint = aws_db_instance.rds.endpoint,
     db_username  = var.db_username,
     db_password  = var.db_password,
@@ -43,12 +49,12 @@ resource "aws_instance" "web_server_2" {
 }
 
 resource "aws_instance" "bastion_host" {
-  ami                    = data.aws_ami.amazon_linux.id
-  instance_type          = "t2.micro"
-  subnet_id              = aws_subnet.public_a.id
-  vpc_security_group_ids = [aws_security_group.webserver_sg.id]
-  key_name               = var.key_pair_name
+ami                    = "ami-0360c520857e3138f"
+instance_type          = "t3.micro"
+subnet_id              = aws_subnet.public_a.id
+vpc_security_group_ids = [aws_security_group.webserver_sg.id]
+ key_name               = aws_key_pair.generated_key.key_name
   tags = {
     Name = "bastion-host"
   }
-}
+ }

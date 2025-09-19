@@ -7,10 +7,10 @@ resource "aws_db_subnet_group" "rds_subnet_group" {
 }
 
 resource "aws_db_instance" "rds" {
-  identifier              = "smarttodowebapp-instance"
+  identifier             = "smarttodowebapp-instance"
   engine                 = "mysql"
   engine_version         = "8.0"
-  instance_class         = "db.t3.micro"
+  instance_class         = "db.t4g.micro"
   allocated_storage      = 20
   storage_type           = "gp2"
   username               = var.db_username

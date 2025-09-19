@@ -10,7 +10,7 @@ resource "aws_vpc" "main" {
 resource "aws_subnet" "public_a" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
-  availability_zone       = "us-east-2a"
+  availability_zone       = "us-east-1a"
   map_public_ip_on_launch = true
   tags = {
     Name = "SmartTodoWebApp-Subnet-Public-A"
@@ -20,7 +20,7 @@ resource "aws_subnet" "public_a" {
 resource "aws_subnet" "public_b" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.3.0/24"
-  availability_zone       = "us-east-2b"
+  availability_zone       = "us-east-1b"
   map_public_ip_on_launch = true
   tags = {
     Name = "SmartTodoWebApp-Subnet-Public-B"
@@ -30,7 +30,7 @@ resource "aws_subnet" "public_b" {
 resource "aws_subnet" "private_a" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.2.0/24"
-  availability_zone = "us-east-2a"
+  availability_zone = "us-east-1a"
   tags = {
     Name = "SmartTodoWebApp-Subnet-Private-A"
   }
@@ -39,7 +39,7 @@ resource "aws_subnet" "private_a" {
 resource "aws_subnet" "private_b" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.4.0/24"
-  availability_zone = "us-east-2b"
+  availability_zone = "us-east-1b"
   tags = {
     Name = "SmartTodoWebApp-Subnet-Private-B"
   }

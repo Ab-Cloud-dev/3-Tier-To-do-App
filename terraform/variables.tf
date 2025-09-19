@@ -21,8 +21,8 @@ variable "db_password" {
   sensitive   = true
 }
 
-variable "key_pair_name" {
-  description = "EC2 key pair name"
-  type        = string
-  default     = "bastion-host-key"
-}
+#variable "key_pair_name" {
+#  description = "EC2 key pair name"
+#  type        = string
+#  default     = "aws_key_pair.generated_key.key_name"
+#}
