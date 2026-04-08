@@ -1,25 +1,9 @@
-name: 1.0$(Rev:.r)
-
-# simplified trigger (implied branch)
 trigger:
-
-- main
-
-# equivalents trigger
-# trigger:
-#  branches:
-#    include:
-#    - main
-
-variables:
-  name: John
+- main   # Runs when code is pushed to main branch
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: ubuntu-latest   # Uses Microsoft-hosted agent
 
-jobs:
-
-- job: helloworld
-  steps:
-    - checkout: self
-    - script: echo "Hello, $(name)"
+steps:
+- script: echo "Hello World"
+  displayName: 'Print Hello World'
