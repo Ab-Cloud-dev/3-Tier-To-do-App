@@ -4,6 +4,7 @@ trigger:
 pool:
   vmImage: ubuntu-latest   # Uses Microsoft-hosted agent
 
+
 steps:
-- script: echo "Hello World"
-  displayName: 'Print Hello World'
+- script: echo $(Build.BuildId)
+- script: echo $(System.DefinitionId)
