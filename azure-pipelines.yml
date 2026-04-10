@@ -2,7 +2,7 @@ trigger:
 - main   # Runs when code is pushed to main branch
 
 pool:
-  vmImage: ubuntu-latest   # Uses Microsoft-hosted agent
+  vmImage: Azure Pipelines  # Uses Microsoft-hosted agent
 
 
 steps:
