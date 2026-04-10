@@ -1,98 +1,147 @@
-trigger:
-- none   # Runs when code is pushed to main branch
+trigger: none
 
-
-pool:
-  name:  Azure Pipelines  # Uses Microsoft-hosted agent
-
-# 🔹 ROOT VARIABLES (Global scope)
+# 🔹 GLOBAL VARIABLES (Available everywhere)
 variables:
-- name: staticVar
-  value: hello-world
+- name: var1
+  value: globalValue
 
 - name: changeVar
-  value: firstValue
-
-# 🔹 RUNTIME EXPRESSION VARIABLE
-- name: isMainBranch
-  value: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
-
-
+  value: initialValue
 
 stages:
-- stage: VariableDemo
+
+# =========================================================
+# 🔹 STAGE 1: BASICS (Compile vs Runtime)
+# =========================================================
+- stage: Stage1_Basics
+  displayName: "Stage 1 - Variable Basics"
+
   jobs:
-  - job: DemoJob
+  - job: Job1_Basic
+    displayName: "Job 1 - Compile vs Runtime"
+
     steps:
-
-    # 🔹 1. SYSTEM VARIABLES
     - script: |
-        echo "Build ID: $(Build.BuildId)"
-        echo "Pipeline Name: $(Build.DefinitionName)"
-      displayName: "System Variables"
-      # Output example:
-      # Build ID: 25
-      # Pipeline Name: MyPipeline
+        echo "Compile-time: ${{ variables.var1 }}"
+        echo "Runtime: $(var1)"
+      displayName: "Global Variable Access"
 
-    # 🔹 2. MACRO SYNTAX (Runtime)
-    - script: |
-        echo "Macro staticVar: $(staticVar)"
-      displayName: "Macro Variable"
       # Output:
-      # Macro staticVar: hello-world
+      # Compile-time: globalValue
+      # Runtime: globalValue
 
-    # 🔹 3. TEMPLATE EXPRESSION (Compile-time)
-    - script: |
-        echo "Compile-time staticVar: ${{ variables.staticVar }}"
-      displayName: "Compile-time Variable"
-      # Output:
-      # Compile-time staticVar: hello-world
 
-    # 🔹 4. BOTH COMPILE vs RUNTIME (Before change)
+# =========================================================
+# 🔹 STAGE 2: VARIABLE UPDATE (Same Job)
+# =========================================================
+- stage: Stage2_Update
+  displayName: "Stage 2 - Update Variable"
+
+  jobs:
+  - job: Job2_Update
+    displayName: "Job 2 - Update Variable in Runtime"
+
+    steps:
     - script: |
+        echo "Before Update:"
         echo "Compile-time: ${{ variables.changeVar }}"
         echo "Runtime: $(changeVar)"
       displayName: "Before Update"
-      # Output:
-      # Compile-time: firstValue
-      # Runtime: firstValue
 
-    # 🔹 5. CHANGE VARIABLE DURING RUNTIME
+      # Output:
+      # Compile-time: initialValue
+      # Runtime: initialValue
+
     - bash: |
-        echo "##vso[task.setvariable variable=changeVar]secondValue"
+        echo "##vso[task.setvariable variable=changeVar]updatedValue"
       displayName: "Update Variable"
 
-    # 🔹 6. CHECK AFTER UPDATE
     - script: |
+        echo "After Update:"
         echo "Compile-time: ${{ variables.changeVar }}"
         echo "Runtime: $(changeVar)"
       displayName: "After Update"
-      # Output:
-      # Compile-time: firstValue   ❗ (does NOT change)
-      # Runtime: secondValue       ✅ (updated)
 
-    # 🔹 7. RUNTIME EXPRESSION VARIABLE
-    - script: |
-        echo "Is Main Branch: $(isMainBranch)"
-      displayName: "Runtime Expression"
       # Output:
-      # true / false (depends on branch)
+      # Compile-time: initialValue   ❗ does NOT change
+      # Runtime: updatedValue       ✅ updated
 
-    # 🔹 8. ENV VARIABLE USAGE
-    - script: |
-        echo "ENV staticVar: $STATICVAR"
-      env:
-        STATICVAR: $(staticVar)
-      displayName: "Environment Variable"
-      # Output:
-      # ENV staticVar: hello-world
 
-    # 🔹 9. JOB LEVEL VARIABLE (Override)
-    - script: |
-        echo "Job level var: $(jobVar)"
-      displayName: "Job Variable"
-      # Output:
-      # Job level var: jobValue
+# =========================================================
+# 🔹 STAGE 3: JOB-LEVEL VARIABLE OVERRIDE
+# =========================================================
+- stage: Stage3_JobScope
+  displayName: "Stage 3 - Job Scope"
+
+  jobs:
+  - job: Job3_Override
+    displayName: "Job 3 - Override Variable"
 
     variables:
-      jobVar: jobValue
+      var1: jobLevelValue   # 👈 overrides global
+
+    steps:
+    - script: |
+        echo "Compile-time: ${{ variables.var1 }}"
+        echo "Runtime: $(var1)"
+      displayName: "Job-level Override"
+
+      # Output:
+      # Compile-time: jobLevelValue
+      # Runtime: jobLevelValue
+
+
+# =========================================================
+# 🔹 STAGE 4: CROSS-JOB VARIABLE (IMPORTANT)
+# =========================================================
+- stage: Stage4_CrossJob
+  displayName: "Stage 4 - Cross Job Variables"
+
+  jobs:
+
+  # 🔸 Job A → sets output variable
+  - job: JobA
+    displayName: "Producer Job"
+
+    steps:
+    - bash: |
+        echo "##vso[task.setvariable variable=myOutput;isOutput=true]helloFromJobA"
+      name: setVarStep
+
+  # 🔸 Job B → consumes output variable
+  - job: JobB
+    displayName: "Consumer Job"
+    dependsOn: JobA
+
+    variables:
+      fromJobA: $[ dependencies.JobA.outputs['setVarStep.myOutput'] ]
+
+    steps:
+    - script: |
+        echo "Value from JobA: $(fromJobA)"
+      displayName: "Use Output Variable"
+
+      # Output:
+      # Value from JobA: helloFromJobA
+
+
+# =========================================================
+# 🔹 STAGE 5: ENV VARIABLES
+# =========================================================
+- stage: Stage5_Env
+  displayName: "Stage 5 - Environment Variables"
+
+  jobs:
+  - job: Job5_Env
+    displayName: "Env Variable Demo"
+
+    steps:
+    - script: |
+        echo "ENV VAR: $MYVAR"
+      env:
+        MYVAR: $(var1)
+
+      displayName: "Environment Variable"
+
+      # Output:
+      # ENV VAR: globalValue
