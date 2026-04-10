@@ -1,12 +1,41 @@
 trigger:
-- main   # Runs when code is pushed to main branch
+- none   # Runs when code is pushed to main branch
+
+variables:
+- name: one
+  value: initialValue 
+- name: appName
+  value: myapp
 
 pool:
   name:  Azure Pipelines  # Uses Microsoft-hosted agent
 
+stages: 
+- stage: teststage 
+  displayName: "Test Stage"
+  jobs:
+  - job: test 
 
-steps:
-- script: echo $(Build.BuildId)
-- script: echo $(System.DefinitionId)
-- script: echo "Running on self-hosted agent"
-  displayName: "Test Step"
+
+    steps:
+    - script: echo $(Build.BuildId)
+      displayName: "Print Build ID"
+
+    - script: echo $(System.DefinitionId)
+      displayName: "Print Definition ID"
+
+    - script: echo "Running on agent"
+      displayName: "Test Step"
+
+    - script: |
+        echo ${{ variables.one }}   # compile-time → initialValue
+        echo $(one)                 # runtime → initialValue
+      displayName: "First variable pass"
+
+    - bash: echo "##vso[task.setvariable variable=one]secondValue"
+      displayName: "Set new variable value"
+
+    - script: |
+        echo ${{ variables.one }}   # compile-time → still initialValue
+        echo $(one)                 # runtime → secondValue
+      displayName: "Second variable pass"
