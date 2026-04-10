@@ -2,7 +2,7 @@ trigger:
 - main   # Runs when code is pushed to main branch
 
 pool:
-  vmImage: Azure Pipelines  # Uses Microsoft-hosted agent
+  name:  Azure Pipelines  # Uses Microsoft-hosted agent
 
 
 steps:
