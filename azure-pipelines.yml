@@ -1,41 +1,98 @@
 trigger:
 - none   # Runs when code is pushed to main branch
 
-variables:
-- name: one
-  value: initialValue 
-- name: appName
-  value: myapp
 
 pool:
   name:  Azure Pipelines  # Uses Microsoft-hosted agent
 
-stages: 
-- stage: teststage 
-  displayName: "Test Stage"
+# 🔹 ROOT VARIABLES (Global scope)
+variables:
+- name: staticVar
+  value: hello-world
+
+- name: changeVar
+  value: firstValue
+
+# 🔹 RUNTIME EXPRESSION VARIABLE
+- name: isMainBranch
+  value: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
+
+
+
+stages:
+- stage: VariableDemo
   jobs:
-  - job: test 
-
-
+  - job: DemoJob
     steps:
-    - script: echo $(Build.BuildId)
-      displayName: "Print Build ID"
 
-    - script: echo $(System.DefinitionId)
-      displayName: "Print Definition ID"
-
-    - script: echo "Running on agent"
-      displayName: "Test Step"
-
+    # 🔹 1. SYSTEM VARIABLES
     - script: |
-        echo ${{ variables.one }}   # compile-time → initialValue
-        echo $(one)                 # runtime → initialValue
-      displayName: "First variable pass"
+        echo "Build ID: $(Build.BuildId)"
+        echo "Pipeline Name: $(Build.DefinitionName)"
+      displayName: "System Variables"
+      # Output example:
+      # Build ID: 25
+      # Pipeline Name: MyPipeline
 
-    - bash: echo "##vso[task.setvariable variable=one]secondValue"
-      displayName: "Set new variable value"
-
+    # 🔹 2. MACRO SYNTAX (Runtime)
     - script: |
-        echo ${{ variables.one }}   # compile-time → still initialValue
-        echo $(one)                 # runtime → secondValue
-      displayName: "Second variable pass"
+        echo "Macro staticVar: $(staticVar)"
+      displayName: "Macro Variable"
+      # Output:
+      # Macro staticVar: hello-world
+
+    # 🔹 3. TEMPLATE EXPRESSION (Compile-time)
+    - script: |
+        echo "Compile-time staticVar: ${{ variables.staticVar }}"
+      displayName: "Compile-time Variable"
+      # Output:
+      # Compile-time staticVar: hello-world
+
+    # 🔹 4. BOTH COMPILE vs RUNTIME (Before change)
+    - script: |
+        echo "Compile-time: ${{ variables.changeVar }}"
+        echo "Runtime: $(changeVar)"
+      displayName: "Before Update"
+      # Output:
+      # Compile-time: firstValue
+      # Runtime: firstValue
+
+    # 🔹 5. CHANGE VARIABLE DURING RUNTIME
+    - bash: |
+        echo "##vso[task.setvariable variable=changeVar]secondValue"
+      displayName: "Update Variable"
+
+    # 🔹 6. CHECK AFTER UPDATE
+    - script: |
+        echo "Compile-time: ${{ variables.changeVar }}"
+        echo "Runtime: $(changeVar)"
+      displayName: "After Update"
+      # Output:
+      # Compile-time: firstValue   ❗ (does NOT change)
+      # Runtime: secondValue       ✅ (updated)
+
+    # 🔹 7. RUNTIME EXPRESSION VARIABLE
+    - script: |
+        echo "Is Main Branch: $(isMainBranch)"
+      displayName: "Runtime Expression"
+      # Output:
+      # true / false (depends on branch)
+
+    # 🔹 8. ENV VARIABLE USAGE
+    - script: |
+        echo "ENV staticVar: $STATICVAR"
+      env:
+        STATICVAR: $(staticVar)
+      displayName: "Environment Variable"
+      # Output:
+      # ENV staticVar: hello-world
+
+    # 🔹 9. JOB LEVEL VARIABLE (Override)
+    - script: |
+        echo "Job level var: $(jobVar)"
+      displayName: "Job Variable"
+      # Output:
+      # Job level var: jobValue
+
+    variables:
+      jobVar: jobValue
